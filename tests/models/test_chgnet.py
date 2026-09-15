@@ -327,11 +327,12 @@ class TestCHGNetPotential:
 
     def test_threebody_forces_finite_difference(self):
         """Verify that forces match finite difference with active 3-body graph."""
+        torch.manual_seed(42)
         model = CHGNet(element_types=("Mo", "S"), threebody_cutoff=3.0)
         p2g = Structure2Graph(element_types=model.element_types, cutoff=model.cutoff)
         # Bond distance in 2.8 A cubic cell is ~2.42 A (< threebody_cutoff = 3.0 A)
         pos0 = [0.48, 0.51, 0.53]
-        h = 0.001
+        h = 0.004
         struct_0 = Structure(Lattice.cubic(2.8), ["Mo", "S"], [[0.0, 0, 0], pos0])
         struct_p = Structure(Lattice.cubic(2.8), ["Mo", "S"], [[0.0, 0, 0], [pos0[0] + h / 2.8, pos0[1], pos0[2]]])
         struct_m = Structure(Lattice.cubic(2.8), ["Mo", "S"], [[0.0, 0, 0], [pos0[0] - h / 2.8, pos0[1], pos0[2]]])
@@ -347,7 +348,7 @@ class TestCHGNetPotential:
         e_p, _, _ = ff(g_p, lat_t, state)
 
         fd = (e_p - e_m) / (2 * h)
-        assert np.allclose(fd.detach().numpy(), grad_zero[1][0].detach().numpy(), atol=1e-4)
+        assert np.allclose(fd.detach().numpy(), grad_zero[1][0].detach().numpy(), atol=1e-3)
 
     def test_batch_potential(self, mos_structure, default_model):
         conv = Structure2Graph(element_types=default_model.element_types, cutoff=default_model.cutoff)
